@@ -24,7 +24,7 @@ class UserFixtures extends Fixture
         $user = new User();
         $user
             ->setRoles(['ROLE_API'])
-            ->setUsername('artsper')
+            ->setUsername('superUser')
             ->setApiToken('superTokenDeTest')
             ->setPassword($this->encoder->encodePassword($user, 'superpassword'))
         ;
