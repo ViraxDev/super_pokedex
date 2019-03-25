@@ -25,4 +25,12 @@ These commands will :
 
 You may need to change Mysql credentials in `.env` file in section `DATABASE_URL`.
 
+To authenticate to the API, you will need to send the following information to the Header : 
+* key: **X-AUTH-TOKEN**
+* value: **superTokenDeTest**
 
+Finally, execute this command which lists all the configured API routes : 
+
+```bash
+$ php bin/console debug:router
+```
