@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controller;
 
 use App\Entity\Pokemon;
@@ -13,8 +15,10 @@ use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Request\ParamFetcher;
 use FOS\RestBundle\Request\ParamFetcherInterface;
 use FOS\RestBundle\View\View;
+use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -65,14 +69,15 @@ class PokemonController extends AbstractFOSRestController
      * )
      * @Rest\QueryParam(
      *     name="limit",
+     *     strict=true,
      *     requirements="\d+",
-     *     default="60",
+     *     default=60,
      *     description="Max number of pokemon per page."
      * )
      * @Rest\QueryParam(
      *     name="offset",
      *     requirements="\d+",
-     *     default="1",
+     *     default=1,
      *     description="The pagination offset"
      * )
      *
@@ -82,6 +87,7 @@ class PokemonController extends AbstractFOSRestController
      * )
      *
      * @Rest\View
+     *
      * @return Pokemons
      */
     public function list(): Pokemons
@@ -89,12 +95,14 @@ class PokemonController extends AbstractFOSRestController
         $pager = $this->getDoctrine()->getRepository(Pokemon::class)->search(
             $this->fetcher->get('keyword'),
             $this->fetcher->get('order'),
-            $this->fetcher->get('limit'),
-            $this->fetcher->get('offset'),
+            (int)$this->fetcher->get('limit'),
+            (int)$this->fetcher->get('offset'),
             $this->fetcher->get('type')
         );
 
-        return new Pokemons($pager);
+        $pokemons = new Pokemons($pager);
+
+        return $pokemons;
     }
 
     /**
@@ -104,20 +112,13 @@ class PokemonController extends AbstractFOSRestController
      *     path="/{id}",
      * )
      *
-     * @Rest\View
+     * @Rest\View(serializerGroups={"detail"})
      *
-     * @param int $id
-     * @param PokemonRepository $pokemonRepository
-     * @return mixed
+     * @param Pokemon $pokemon
+     * @return Pokemon
      */
-    public function show(int $id, PokemonRepository $pokemonRepository)
+    public function show(Pokemon $pokemon): Pokemon
     {
-        $pokemon = $pokemonRepository->findOneById($id);
-
-        if (is_null($pokemon)) {
-            throw new NotFoundHttpException('Pokemon not found !');
-        }
-
         return $pokemon;
     }
 
@@ -129,7 +130,7 @@ class PokemonController extends AbstractFOSRestController
      *
      * @param Request $request
      * @param Pokemon $pokemon
-     * @return \FOS\RestBundle\View\View
+     * @return View
      */
     public function create(Request $request, Pokemon $pokemon): View
     {
@@ -162,24 +163,16 @@ class PokemonController extends AbstractFOSRestController
      * @Rest\View
      *
      * @param Request $request
-     * @param int $id
-     * @param PokemonRepository $pokemonRepository
-     * @return \FOS\RestBundle\View\View
+     * @param Pokemon $pokemon
+     * @return View
      */
-    public function edit(Request $request, int $id, PokemonRepository $pokemonRepository): View
+    public function edit(Request $request, Pokemon $pokemon): View
     {
         $data = $this->serializer->deserialize($request->getContent(), 'array', 'json');
-
-        $pokemon = $pokemonRepository->findOneById($id);
-
-        if (is_null($pokemon)) {
-            throw new NotFoundHttpException('Pokemon not found !');
-        }
 
         $form = $this->get('form.factory')->create(PokemonType::class, $pokemon);
 
         $form->submit($data, false);
-
 
         $em = $this->getDoctrine()->getManager();
         $em->persist($pokemon);
@@ -198,17 +191,10 @@ class PokemonController extends AbstractFOSRestController
      *
      * @Rest\View
      *
-     * @param int $id
-     * @param PokemonRepository $pokemonRepository
+     * @param Pokemon $pokemon
      */
-    public function remove(int $id, PokemonRepository $pokemonRepository): void
+    public function remove(Pokemon $pokemon): void
     {
-        $pokemon = $pokemonRepository->findOneById($id);
-
-        if (is_null($pokemon)) {
-            throw new NotFoundHttpException('Pokemon not found !');
-        }
-
         $em = $this->getDoctrine()->getManager();
         $em->remove($pokemon);
         $em->flush();

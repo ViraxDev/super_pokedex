@@ -16,10 +16,6 @@ class PokemonType extends AbstractType
             ->add('name')
             ->add('generation')
             ->add('legendary')
-            ->add('types', CollectionType::class, [
-                'entry_type' => TypeType::class,
-                'allow_add' => true
-            ])
             ->add('characteristics', CollectionType::class, [
                 'entry_type' => PokemonCharacteristicType::class,
                 'allow_add' => true
