@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\EventListener;
 
+use Exception;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -43,7 +44,7 @@ class ExceptionListener
 
         if ($exception instanceof HttpExceptionInterface) {
 
-//            $this->throwException($exception, $response);
+            $response = $this->throwException($exception, $response);
 
             $response->setStatusCode($exception->getStatusCode());
             $response->headers->replace($exception->getHeaders());
@@ -57,15 +58,20 @@ class ExceptionListener
     }
 
 
-    private function throwException(\Exception $exception, JsonResponse $jsonResponse)
+    private function throwException(Exception $exception, JsonResponse $jsonResponse): JsonResponse
     {
+
         //TODO Renvoyer un bon code erreur pour les Notfound avec l'id
-        $id = is_null($this->request->get('id'));
+        $id = $this->request->get('id');
 
         switch ($exception) {
-            case $exception instanceof NotFoundHttpException && !$id:
-                dump($jsonResponse);
-                die;
+            case $exception instanceof NotFoundHttpException && false !== $id:
+                $jsonResponse = new JsonResponse([
+                    'error' => "The object with id $id not found"
+                ]);
+                break;
         }
+
+        return $jsonResponse;
     }
 }
