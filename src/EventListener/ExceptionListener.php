@@ -61,7 +61,6 @@ class ExceptionListener
     private function throwException(Exception $exception, JsonResponse $jsonResponse): JsonResponse
     {
 
-        //TODO Renvoyer un bon code erreur pour les Notfound avec l'id
         $id = $this->request->get('id');
 
         switch ($exception) {
